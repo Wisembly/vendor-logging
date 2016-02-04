@@ -1,0 +1,15 @@
+{
+    "name": "wisembly-vendor-logging",
+    "moduleType": [
+        "globals"
+    ],
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components"
+    ],
+    "dependencies": {
+        "logmatic-js": ">=0.0.10",
+        "stacktrace-js": ">=1.0.1"
+    }
+}
