@@ -186,6 +186,8 @@ var WisemblyLogging = (function () {
 
     var WisemblyLogging = function (options) {
 
+        this.extraFeeder = function (extra) { return extra; };
+
         if (options && (options === true || options.hookEventListeners))
             hookEventListeners(this);
 
@@ -201,12 +203,21 @@ var WisemblyLogging = (function () {
 
     };
 
+    WisemblyLogging.prototype.setExtraFeeder = function (feeder) {
+
+        if (typeof feeder !== 'function')
+            throw new Error('A feeder has to be a function');
+
+        this.extraFeeder = feeder;
+
+    };
+
     WisemblyLogging.prototype.captureMessage = function (message, extra) {
 
         if (!window.logmatic)
             return ;
 
-        window.logmatic.log(message, extra);
+        window.logmatic.log(message, this.extraFeeder(extra));
 
     };
 
