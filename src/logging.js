@@ -1,4 +1,4 @@
-var WisemblyLogging = (function () {
+var WisemblyLogging = (function (global) {
 
     var logWrapped;
 
@@ -72,11 +72,17 @@ var WisemblyLogging = (function () {
 
         var original;
 
+        // Some browsers throw an exception if we try to access Element.prototype.on{Event}
+        // We catch it and ignore it, since it means that the behaviour is actually there
+
         try {
             original = object[property];
         } catch (e) {
             original = null;
         }
+
+        if (typeof original === 'undefined')
+            return ;
 
         Object.defineProperty(object, property, replacement(original));
 
@@ -141,9 +147,6 @@ var WisemblyLogging = (function () {
 
     var hookTimeout = function (instance) {
 
-        if (!window.setTimeout)
-            return ;
-
         hook(window, 'setTimeout', function (original) {
 
             return { value: function (callback, duration) {
@@ -156,9 +159,6 @@ var WisemblyLogging = (function () {
 
     var hookInterval = function (instance) {
 
-        if (!window.setInterval)
-            return ;
-
         hook(window, 'setInterval', function (original) {
 
             return { value: function (callback, duration) {
@@ -170,9 +170,6 @@ var WisemblyLogging = (function () {
     };
 
     var hookAnimationFrame = function (instance) {
-
-        if (!window.requestAnimationFrame)
-            return ;
 
         hook(window, 'requestAnimationFrame', function (original) {
 
@@ -223,9 +220,6 @@ var WisemblyLogging = (function () {
 
     WisemblyLogging.prototype.captureException = function (error, extra) {
 
-        if (!window.logmatic)
-            return ;
-
         if (typeof error !== 'object')
             error = { message: String(error) };
 
@@ -253,6 +247,9 @@ var WisemblyLogging = (function () {
 
     };
 
+    if (global)
+        global.WisemblyLogging = WisemblyLogging;
+
     return WisemblyLogging;
 
-})();
+})(typeof window !== 'undefined' ? window : null);
