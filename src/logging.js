@@ -183,7 +183,7 @@ var WisemblyLogging = (function (global) {
 
     var WisemblyLogging = function (options) {
 
-        this.extraFeeder = function (extra) { return extra; };
+        this.transformers = [];
 
         if (options && (options === true || options.hookEventListeners))
             hookEventListeners(this);
@@ -200,12 +200,12 @@ var WisemblyLogging = (function (global) {
 
     };
 
-    WisemblyLogging.prototype.setExtraFeeder = function (feeder) {
+    WisemblyLogging.prototype.addTransformer = function (transformer) {
 
-        if (typeof feeder !== 'function')
-            throw new Error('A feeder has to be a function');
+        if (typeof transformer !== 'function')
+            throw new Error('A transformer has to be a function');
 
-        this.extraFeeder = feeder;
+        this.transformers.push(transformer);
 
     };
 
@@ -214,7 +214,10 @@ var WisemblyLogging = (function (global) {
         if (!window.logmatic)
             return ;
 
-        window.logmatic.log(message, this.extraFeeder(extra));
+        for (var t = 0, T = this.transformers.length; t < T; ++ t)
+            extra = this.transformers[t](extra);
+
+        window.logmatic.log(message, extra);
 
     };
 
