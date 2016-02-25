@@ -10,6 +10,6 @@
     ],
     "dependencies": {
         "logmatic-js": ">=0.0.10",
-        "stacktrace-js": ">=1.0.1"
+        "stacktrace-js": ">=1.0.4"
     }
 }
