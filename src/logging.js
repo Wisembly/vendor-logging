@@ -90,7 +90,10 @@ var WisemblyLogging = (function (global) {
 
     var hookEventListeners = function (instance) {
 
-        var classes = [Window, Document, HTMLElement, XMLHttpRequest];
+        var classes = [Document, HTMLElement, XMLHttpRequest];
+
+        if (typeof Window !== 'undefined')
+            classes.push(Window); // `Window` is apparently not available inside a QtView
 
         for (var t = 0, T = classes.length; t < T; ++ t) {
 
