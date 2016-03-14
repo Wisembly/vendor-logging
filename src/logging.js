@@ -88,22 +88,83 @@ var WisemblyLogging = (function (global) {
 
     };
 
+    var attach = function (instance, eventName, callback) {
+
+        if (instance.addEventListener) {
+
+            instance.addEventListener(eventName, callback, false);
+
+        } else {
+
+            instance.attachEvent('on' + eventName, callback);
+
+        }
+
+    };
+
+    var detach = function (instance, eventName, callback) {
+
+        if (instance.removeEventListener) {
+
+            instance.removeEventListener(eventName, callback, false);
+
+        } else {
+
+            instance.detachEvent('on' + eventName, callback);
+
+        }
+
+    };
+
+    var call = function (instance, original) {
+
+        var params = [instance];
+
+        for (var t = 2; t < arguments.length; ++ t)
+            params.push(arguments[t]);
+
+        return Function.prototype.call.apply(original, params);
+
+    };
+
     var hookEventListeners = function (instance) {
 
-        var classes = [Document, HTMLElement, XMLHttpRequest];
+        var classes = [XMLHttpRequest];
 
         if (typeof Window !== 'undefined')
             classes.push(Window); // `Window` is apparently not available inside a QtView
+
+        if (typeof Document !== 'undefined')
+            classes.push(Document); // `Document` isn't available in IE8
+
+        if (typeof HTMLElement !== 'undefined')
+            classes.push(HTMLElement); // `HTMLElement` isn't available in IE8
 
         for (var t = 0, T = classes.length; t < T; ++ t) {
 
             var prototype = classes[t].prototype;
             var eventNames = getEventNames(prototype);
 
+            hook(prototype, 'attachEvent', function (original) {
+
+                return { value: function (eventName, callback) {
+                    return call(this, original, eventName, wrap(callback, instance));
+                } };
+
+            });
+
+            hook(prototype, 'detachEvent', function (original) {
+
+                return { value: function (eventName, callback) {
+                    return call(this, original, eventName, callback.__log_wrap__);
+                } };
+
+            } );
+
             hook(prototype, 'addEventListener', function (original) {
 
                 return { value: function (eventName, callback, useCapture) {
-                    return original.call(this, eventName, wrap(callback, instance), useCapture);
+                    return call(this, original, eventName, wrap(callback, instance), useCapture);
                 } };
 
             });
@@ -111,7 +172,7 @@ var WisemblyLogging = (function (global) {
             hook(prototype, 'removeEventListener', function (original) {
 
                 return { value: function (eventName, callback, useCapture) {
-                    return original.call(this, eventName, callback && callback.__log_wrap__, useCapture);
+                    return call(this, original, eventName, callback && callback.__log_wrap__, useCapture);
                 } };
 
             });
@@ -132,9 +193,9 @@ var WisemblyLogging = (function (global) {
 
                         set: function (callback) {
 
-                            this.removeEventListener(eventName, this['__' + eventName]);
+                            detach(this, eventName, this['__' + eventName]);
                             this['__' + eventName] = callback;
-                            this.addEventListener(eventName, this['__' + eventName]);
+                            attach(this, eventName, this['__' + eventName]);
 
                         }
 
@@ -153,7 +214,7 @@ var WisemblyLogging = (function (global) {
         hook(window, 'setTimeout', function (original) {
 
             return { value: function (callback, duration) {
-                return original.call(this, wrap(callback, instance), duration);
+                return call(this, original, wrap(callback, instance), duration);
             } };
 
         });
@@ -165,7 +226,7 @@ var WisemblyLogging = (function (global) {
         hook(window, 'setInterval', function (original) {
 
             return { value: function (callback, duration) {
-                return original.call(this, wrap(callback, instance), duration);
+                return call(this, original, wrap(callback, instance), duration);
             } };
 
         });
@@ -177,7 +238,7 @@ var WisemblyLogging = (function (global) {
         hook(window, 'requestAnimationFrame', function (original) {
 
             return { value: function (callback, element) {
-                return original.call(this, wrap(callback, instance), element);
+                return call(this, original, wrap(callback, instance), element);
             } };
 
         });
@@ -233,7 +294,7 @@ var WisemblyLogging = (function (global) {
 
             window.StackTrace.fromError(error).then(function (stackFrames) {
                 this.captureMessage(error.message, { severity: 'error', error: { mode: 'JSException', stackFrames: stackFrames }, extra: extra });
-            }.bind(this)).catch(function () {
+            }.bind(this))['catch'](function () {
                 this.captureMessage(error.message, { severity: 'error', error: { mode: 'JSException', stackFrames: '<StackTrace error>' }, extra: extra });
             }.bind(this));
 

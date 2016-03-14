@@ -21,6 +21,24 @@ var portableSendClickEvent = function (element) {
 
 };
 
+var portableAttachEvent = function (element, eventName, callback) {
+
+    if (element.addEventListener) {
+
+        element.addEventListener(eventName, callback, false);
+
+    } else if (element.attachEvent) {
+
+        element.attachEvent('on' + eventName, callback);
+
+    } else {
+
+        element['on' + eventName] = callback;
+
+    }
+
+};
+
 QUnit.test('it should catch errors dispatched in DOM events', function (assert) {
 
     assert.willLog(function (throwAction) {
@@ -28,7 +46,7 @@ QUnit.test('it should catch errors dispatched in DOM events', function (assert) 
         var element = document.createElement('div');
         document.body.appendChild(element);
 
-        element.addEventListener('click', throwAction);
+        portableAttachEvent(element, 'click', throwAction);
         portableSendClickEvent(element);
 
     });
@@ -96,7 +114,7 @@ QUnit.test('it should catch errors dispatched in XHR callbacks', function (asser
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '?', false);
 
-        xhr.addEventListener('readystatechange', function () {
+        portableAttachEvent(xhr, 'readystatechange', function () {
             if (xhr.readyState === 4) throwAction();
         });
 
