@@ -84,7 +84,11 @@ var WisemblyLogging = (function (global) {
         if (typeof original === 'undefined')
             return ;
 
-        Object.defineProperty(object, property, replacement(original));
+        try {
+            Object.defineProperty(object, property, replacement(original));
+        } catch (e) {
+            // IE8 doesn't support defineProperty (it can't even be shimed)
+        }
 
     };
 
