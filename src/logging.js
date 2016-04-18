@@ -282,6 +282,9 @@ var WisemblyLogging = (function (global) {
         if (!window.logmatic)
             return ;
 
+        if (typeof extra === 'undefined')
+            extra = {};
+
         for (var t = 0, T = this.transformers.length; t < T; ++ t)
             extra = this.transformers[t](extra);
 
@@ -293,6 +296,9 @@ var WisemblyLogging = (function (global) {
 
         if (typeof error !== 'object')
             error = { message: String(error) };
+
+        if (typeof extra === 'undefined')
+            extra = {};
 
         if (window.StackTrace && error.stack) {
 
